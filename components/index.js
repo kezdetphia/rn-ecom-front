@@ -1,3 +1,3 @@
 import Welcome from "./home/Welcome";
-
-export { Welcome };
+import ProductList from "./products/ProductList";
+export { Welcome, ProductList };

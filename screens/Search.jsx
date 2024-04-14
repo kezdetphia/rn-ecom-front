@@ -1,14 +1,35 @@
 import {
+  FlatList,
+  Image,
   SafeAreaView,
   StyleSheet,
+  Text,
   TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
-import React from "react";
+import React, { useState } from "react";
 import { Ionicons, Feather } from "@expo/vector-icons";
+import axios from "axios";
+import SearchTile from "../components/products/SearchTile";
 
 const Search = () => {
+  const [searchKey, setSearchKey] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+
+  const handleSearch = async () => {
+    try {
+      const res = await axios.get(
+        `http://localhost:3000/api/products/search/${searchKey}`
+      );
+      setSearchResults(res.data);
+    } catch (err) {
+      console.log("Failed to fetch data", err);
+    }
+  };
+
+  console.log("sreachresultsssss", searchResults);
+
   return (
     <SafeAreaView>
       <View style={styles.searchContainer}>
@@ -21,18 +42,36 @@ const Search = () => {
 
         <View style={styles.searchWrapper}>
           <TextInput
-            value=""
-            onPressIn={() => {}}
+            value={searchKey}
+            onChangeText={setSearchKey}
             placeholder="What Are You Looking For?"
             style={styles.searchInput}
           />
         </View>
         <View>
-          <TouchableOpacity style={styles.searchBtn}>
-            <Ionicons name="camera-outline" size={30} color="white" />
+          <TouchableOpacity
+            style={styles.searchBtn}
+            onPress={() => handleSearch()}
+          >
+            <Ionicons name="search-outline" size={30} color="white" />
           </TouchableOpacity>
         </View>
       </View>
+      {searchResults.length === 0 ? (
+        <View style={{ flex: 1 }}>
+          <Image
+            source={require("../assets/search.png")}
+            style={styles.searchImage}
+          />
+        </View>
+      ) : (
+        <FlatList
+          data={searchResults}
+          keyExtractor={(item) => item._id}
+          renderItem={({ item }) => <SearchTile item={item} />}
+          style={{ marginHorizontal: 12 }}
+        />
+      )}
     </SafeAreaView>
   );
 };
@@ -74,5 +113,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "teal",
+  },
+  searchImage: {
+    resizeMode: "contain",
+    width: 100,
+    opacity: 0.9,
   },
 });

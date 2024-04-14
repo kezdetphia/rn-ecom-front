@@ -6,7 +6,12 @@ import {
   MaterialCommunityIcons,
   Fontisto,
 } from "@expo/vector-icons";
+import { useRoute } from "@react-navigation/native";
+
 const ProductDetails = ({ navigation }) => {
+  const route = useRoute();
+  const { item } = route.params;
+
   const [count, setCount] = useState(1);
 
   const increment = () => {
@@ -36,15 +41,15 @@ const ProductDetails = ({ navigation }) => {
       </View>
       <Image
         source={{
-          uri: "https://images.pexels.com/photos/1866149/pexels-photo-1866149.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
+          uri: item.imageUrl,
         }}
         style={styles.image}
       />
       <View style={styles.details}>
         <View style={styles.titleRow}>
-          <Text style={styles.title}>Title</Text>
+          <Text style={styles.title}>{item.title}</Text>
           <View style={styles.priceWrapper}>
-            <Text style={styles.price}>$599</Text>
+            <Text style={styles.price}>${item.price}</Text>
           </View>
         </View>
 
@@ -72,22 +77,12 @@ const ProductDetails = ({ navigation }) => {
         </View>
         <View style={styles.descriptionWrapper}>
           <Text style={styles.description}>Description</Text>
-          <Text style={styles.descText}>
-            Lorem Ipsum is simply dummy text of the printing and typesetting
-            industry. Lorem Ipsum has been the industry's standard dummy text
-            ever since the 1500s, when an unknown printer took a galley of type
-            and scrambled it to make a type specimen book. It has survived not
-            only five centuries, but also the leap into electronic typesetting,
-            remaining essentially unchanged. It was popularised in the 1960s
-            with the release of Letraset sheets containing Lorem Ipsum passages,
-            and more recently with desktop publishing software like Aldus
-            PageMaker including versions of Lorem Ipsum.
-          </Text>
+          <Text style={styles.descText}>{item.description}</Text>
           <View style={{ marginBottom: 12 }}>
             <View style={styles.location}>
               <View style={{ flexDirection: "row" }}>
                 <Ionicons name="location-outline" size={20} />
-                <Text> Los Angeles </Text>
+                <Text>{item.product_location}</Text>
               </View>
               <View style={{ flexDirection: "row" }}>
                 <MaterialCommunityIcons
