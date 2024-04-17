@@ -37,9 +37,11 @@ export default NewRivals;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    // backgroundColor: "darkgrey",
     backgroundColor: "#F6F7F3",
   },
   wrapper: { flex: 1, backgroundColor: "#F6F7F3" },
+  // wrapper: { backgroundColor: "white" },
   upperRow: {
     width: "90%",
     marginHorizontal: 20,

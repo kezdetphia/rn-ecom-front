@@ -68,7 +68,7 @@ const styles = StyleSheet.create({
   title: {
     fontFamily: "semibold",
     fontSize: 15,
-    marginBotton: 2,
+    // marginBotton: 2,
     paddingLeft: 8,
     paddingTop: 3,
     color: "#2D2E2F",

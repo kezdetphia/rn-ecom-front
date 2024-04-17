@@ -1,5 +1,5 @@
 import { StyleSheet, Text, TouchableOpacity, View, Image } from "react-native";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Ionicons,
   SimpleLineIcons,
@@ -7,12 +7,16 @@ import {
   Fontisto,
 } from "@expo/vector-icons";
 import { useRoute } from "@react-navigation/native";
+import addToCart from "../hook/addToCart";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const ProductDetails = ({ navigation }) => {
   const route = useRoute();
   const { item } = route.params;
 
   const [count, setCount] = useState(1);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [favourites, setFavourites] = useState(false);
 
   const increment = () => {
     setCount(count + 1);
@@ -21,6 +25,113 @@ const ProductDetails = ({ navigation }) => {
   const decrement = () => {
     if (count > 1) {
       setCount(count - 1);
+    }
+  };
+
+  const checkUser = async () => {
+    try {
+      const id = await AsyncStorage.getItem("id");
+      if (id !== null) {
+        setIsLoggedIn(true);
+        console.log("User logged in");
+      } else {
+        console.log("User not logged in");
+      }
+    } catch (err) {
+      console.log("Error checking user: ", err);
+    }
+  };
+
+  useEffect(() => {
+    checkUser();
+    checkFavourites();
+  }, []);
+
+  const addToFavourites = async () => {
+    const id = await AsyncStorage.getItem("id");
+    //favourites+mongo user id
+    const favouritesId = `favourites${JSON.parse(id)}`;
+
+    //mongo doc product id
+    let productId = item._id;
+
+    let productObj = {
+      title: item.title,
+      id: item._id,
+      supplier: item.supplier,
+      price: item.price,
+      imageUrl: item.imageUrl,
+      product_location: item.product_location,
+    };
+
+    try {
+      //check if we have any facourites in the AsyncStorage
+      //under 'favourites' + mongo user id' key
+      const existingItem = await AsyncStorage.getItem(favouritesId);
+
+      let favouritesObj = existingItem ? JSON.parse(existingItem) : {};
+
+      if (favouritesObj[productId]) {
+        delete favouritesObj[productId];
+        console.log("Item removed from favourites");
+        setFavourites(false);
+      } else {
+        favouritesObj[productId] = productObj;
+        console.log("added to fav");
+        setFavourites(true);
+      }
+
+      await AsyncStorage.setItem(favouritesId, JSON.stringify(favouritesObj));
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+  const handleFavourites = () => {
+    if (!isLoggedIn) {
+      navigation.navigate("Login");
+    } else {
+      addToFavourites();
+    }
+  };
+
+  const handleBuy = () => {
+    if (!isLoggedIn) {
+      navigation.navigate("Login");
+    } else {
+      console.log("pressed");
+    }
+  };
+  const handleCart = () => {
+    if (!isLoggedIn) {
+      navigation.navigate("Login");
+    } else {
+      addToCart(item._id, count);
+    }
+  };
+
+  const checkFavourites = async () => {
+    const id = await AsyncStorage.getItem("id");
+    const favouritesId = `favourites${JSON.parse(id)}`;
+
+    try {
+      // const existingItem = await AsyncStorage.getItem(favouritesId);
+      const favouritesObj = await AsyncStorage.getItem(favouritesId);
+      // let favouritesObj = existingItem ? JSON.parse(existingItem) : {};
+
+      // if (favouritesObj[item._id]) {
+      if (favouritesObj !== null) {
+        const favourites = JSON.parse(favouritesObj);
+
+        if (favourites[item._id]) {
+          console.log(item._id, "is in favourites");
+          setFavourites(true);
+        }
+      } else {
+        setFavourites(false);
+      }
+    } catch (err) {
+      console.log(err);
     }
   };
 
@@ -35,8 +146,16 @@ const ProductDetails = ({ navigation }) => {
           <Ionicons name="arrow-back-circle-outline" size={30} />
         </TouchableOpacity>
 
-        <TouchableOpacity>
-          <Ionicons name="heart" size={30} color="teal" />
+        <TouchableOpacity
+          onPress={() => {
+            handleFavourites();
+          }}
+        >
+          <Ionicons
+            name={favourites ? "heart" : "heart-outline"}
+            size={30}
+            color="teal"
+          />
         </TouchableOpacity>
       </View>
       <Image
@@ -95,11 +214,21 @@ const ProductDetails = ({ navigation }) => {
           </View>
         </View>
         <View style={styles.cartRow}>
-          <TouchableOpacity onPress={() => {}} style={styles.cartBtn}>
+          <TouchableOpacity
+            onPress={() => {
+              handleBuy();
+            }}
+            style={styles.cartBtn}
+          >
             <Text style={styles.cartTitle}>BUY NOW</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity onPress={() => {}} style={styles.addCart}>
+          <TouchableOpacity
+            onPress={() => {
+              handleCart();
+            }}
+            style={styles.addCart}
+          >
             <Fontisto
               name="shopping-bag"
               size={22}

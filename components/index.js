@@ -1,3 +1,6 @@
 import Welcome from "./home/Welcome";
 import ProductList from "./products/ProductList";
-export { Welcome, ProductList };
+import BackBtn from "./BackBtn";
+import Button from "./Button";
+
+export { Welcome, ProductList, BackBtn, Button };
