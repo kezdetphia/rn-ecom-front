@@ -2,7 +2,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 import { useState, useEffect } from "react";
 
-const fetchCart = async () => {
+const fetchCart = () => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -19,14 +19,20 @@ const fetchCart = async () => {
       };
 
       const res = await axios.get(endpoint, { headers });
-      const newData = JSON.stringify(res.data);
-      setData(newData);
+      // const newData = JSON.stringify(res.data);
+      // setData(newData);
+      //TODO: not sure if i need to access the first item in the list
+      //since it is indeed an array of objects but the token ensures
+      //that only the user's cart is returned
+      const cartProducts = res.data[0].products;
+      console.log("fetchcart CartPorudcts: ", cartProducts);
+      // const parsedData = JSON.parse(newData);
 
-      const parsedData = JSON.parse(newData);
-      const products = parsedData[0].products;
-      await AsyncStorage.setItem("cartCount", JSON.stringify(products.length));
+      //delete this func due to performance improvement
+      // await AsyncStorage.setItem("cartCount", JSON.stringify(products.length));
 
-      setData(products);
+      setData(cartProducts);
+      console.log("fetchcart data: ", data);
       setLoader(false);
     } catch (err) {
       setError(err);

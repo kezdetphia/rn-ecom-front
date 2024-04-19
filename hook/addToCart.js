@@ -5,7 +5,7 @@ const addToCart = async (productId, quantity) => {
   try {
     const token = await AsyncStorage.getItem("token");
     const endpoint = "http://localhost:3000/api/cart";
-    
+
     console.log("addToCartHooktoken", token);
 
     const data = {

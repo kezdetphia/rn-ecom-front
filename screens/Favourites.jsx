@@ -14,6 +14,7 @@ import { Ionicons, SimpleLineIcons } from "@expo/vector-icons";
 const screenWidth = Dimensions.get("window").width;
 
 const Favourites = ({ navigation }) => {
+  console.log(screenWidth);
   const [favData, setFavData] = useState([]);
 
   useEffect(() => {
