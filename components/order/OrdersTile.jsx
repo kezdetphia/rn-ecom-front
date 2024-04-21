@@ -68,7 +68,7 @@ const styles = StyleSheet.create({
     color: "teal",
   },
   supplier: {
-    fontsize: 14,
+    fontSize: 14,
     fontFamily: "regular",
     color: "gray",
     marginTop: 3,

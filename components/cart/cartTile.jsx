@@ -17,15 +17,14 @@ const CartTile = ({
     itemQuantity.find((prod) => prod.cartItemId === item.cartItem._id)
       ?.cartItemQuantity || 0;
 
-  console.log("item_id in cartTile:", item._id);
-
   const cartSingleItemId = item._id.toString();
 
+
   const handleDelete = async (itemId) => {
-    const res = await axios.delete(
-      `https://rn-ecom-back.vercel.app/api/cart/${itemId}`
-    );
-    // const res = await axios.delete(`http://localhost:3000/api/cart/${itemId}`);
+    // const res = await axios.delete(
+    //   `https://rn-ecom-back.vercel.app/api/cart/${itemId}`
+    // );
+    const res = await axios.delete(`http://localhost:3000/api/cart/${itemId}`);
     if (!res.data.error) {
       console.log("Item deleted");
     } else {
@@ -121,7 +120,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
   },
   productTxt: {
-    fontsize: 16,
+    fontSize: 16,
     fontFamily: "bold",
     color: "teal",
   },

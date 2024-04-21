@@ -15,6 +15,8 @@ import {
   SignupPage,
 } from "./screens";
 
+
+
 const Stack = createNativeStackNavigator();
 
 export default function App() {
@@ -38,65 +40,67 @@ export default function App() {
   }
 
   return (
-    <NavigationContainer>
-      <Stack.Navigator>
-        <Stack.Screen
-          name="Bottom Navigation"
-          component={BottomTabNavigation}
-          options={{
-            headerShown: false,
-          }}
-        />
-        <Stack.Screen
-          name="Cart"
-          component={Cart}
-          options={{
-            headerShown: false,
-          }}
-        />
-        <Stack.Screen
-          name="ProductDetails"
-          component={ProductDetails}
-          options={{
-            headerShown: false,
-          }}
-        />
-        <Stack.Screen
-          name="ProductList"
-          component={NewRivals}
-          options={{
-            headerShown: false,
-          }}
-        />
-        <Stack.Screen
-          name="Login"
-          component={LoginPage}
-          options={{
-            headerShown: false,
-          }}
-        />
-        <Stack.Screen
-          name="Orders"
-          component={Orders}
-          options={{
-            headerShown: false,
-          }}
-        />
-        <Stack.Screen
-          name="Favourites"
-          component={Favourites}
-          options={{
-            headerShown: false,
-          }}
-        />
-        <Stack.Screen
-          name="Signup"
-          component={SignupPage}
-          options={{
-            headerShown: false,
-          }}
-        />
-      </Stack.Navigator>
-    </NavigationContainer>
+
+      <NavigationContainer>
+        <Stack.Navigator>
+          <Stack.Screen
+            name="Bottom Navigation"
+            component={BottomTabNavigation}
+            options={{
+              headerShown: false,
+            }}
+          />
+          <Stack.Screen
+            name="Cart"
+            component={Cart}
+            options={{
+              headerShown: false,
+            }}
+          />
+          <Stack.Screen
+            name="ProductDetails"
+            component={ProductDetails}
+            options={{
+              headerShown: false,
+            }}
+          />
+          <Stack.Screen
+            name="ProductList"
+            component={NewRivals}
+            options={{
+              headerShown: false,
+            }}
+          />
+          <Stack.Screen
+            name="Login"
+            component={LoginPage}
+            options={{
+              headerShown: false,
+            }}
+          />
+          <Stack.Screen
+            name="Orders"
+            component={Orders}
+            options={{
+              headerShown: false,
+            }}
+          />
+          <Stack.Screen
+            name="Favourites"
+            component={Favourites}
+            options={{
+              headerShown: false,
+            }}
+          />
+          <Stack.Screen
+            name="Signup"
+            component={SignupPage}
+            options={{
+              headerShown: false,
+            }}
+          />
+        </Stack.Navigator>
+      </NavigationContainer>
+
   );
 }

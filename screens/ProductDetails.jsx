@@ -27,6 +27,8 @@ const ProductDetails = ({ navigation }) => {
   const [favourites, setFavourites] = useState(false);
   const [paymentUrl, setPaymentUrl] = useState(false);
 
+  console.log("item in productDetails:", item._id);
+
   const increment = () => {
     setCount(count + 1);
   };
@@ -55,6 +57,7 @@ const ProductDetails = ({ navigation }) => {
 
   const createCheckOut = async () => {
     const id = JSON.parse(await AsyncStorage.getItem("id"));
+    console.log("chreatechekout id proddeetz :", id);
 
     fetch(
       "https://rn-ecom-payment-server-production.up.railway.app/stripe/create-checkout-session",
@@ -165,7 +168,6 @@ const ProductDetails = ({ navigation }) => {
       console.log(error);
     }
   };
-
 
   return (
     <View style={styles.container}>

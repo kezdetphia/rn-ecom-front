@@ -4,10 +4,8 @@ import axios from "axios";
 const addToCart = async (productId, quantity) => {
   try {
     const token = await AsyncStorage.getItem("token");
-    const endpoint = "https://rn-ecom-back.vercel.app/api/cart";
-    // const endpoint = "http://localhost:3000/api/cart";
-
-    console.log("addToCartHooktoken", token);
+    // const endpoint = "https://rn-ecom-back.vercel.app/api/cart";
+    const endpoint = "http://localhost:3000/api/cart";
 
     const data = {
       cartItem: productId,

@@ -8,19 +8,25 @@ import {
   ActivityIndicator,
   FlatList,
 } from "react-native";
-import { Ionicons, SimpleLineIcons } from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons";
 import fetchCart from "../hook/fetchCart";
 import CartTile from "../components/cart/cartTile";
 import { useEffect, useState } from "react";
 import Button from "../components/Button";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import WebView from "react-native-webview";
 
 const screenWidth = Dimensions.get("window").width;
+
+//TODO: work out price based on items in the cart, also add a checkout function
+
 const Cart = ({ navigation }) => {
   const { data, loading, error, refetch } = fetchCart();
   const [selectedItems, setSelectedItems] = useState([]);
   const [itemQuantity, setItemQuantity] = useState([]);
+  const [paymentUrl, setPaymentUrl] = useState(false);
 
+  console.log("Cart item quantity:", itemQuantity);
 
   const deleteCartItem = (cartItemId) => {
     // Remove the item from the data and itemQuantity arrays
@@ -33,7 +39,6 @@ const Cart = ({ navigation }) => {
     refetch(); // This will refetch the cart data from the server
     setItemQuantity(updatedItemQuantity);
   };
-
 
   const onIncrement = (cartItemId) => {
     const updatedItemQuantity = itemQuantity.map((item) => {
@@ -63,7 +68,7 @@ const Cart = ({ navigation }) => {
 
   useEffect(() => {
     const intialItemQuantityDetails = data.map((item) => ({
-      cartItemId: item.cartItem._id,
+      // cartItemId: item.cartItem._id,
       cartItemQuantity: item.quantity,
     }));
     setItemQuantity(intialItemQuantityDetails);
@@ -101,93 +106,110 @@ const Cart = ({ navigation }) => {
     }
   };
 
-  //TODO: Add checkoout function
-  // add delete from cart function
-  // const createCheckOut = async () => {
-  //   const userId = JSON.parse(await AsyncStorage.getItem("id"));
-  //   console.log(userId);
+  const createCheckOut = async () => {
+    const id = JSON.parse(await AsyncStorage.getItem("id"));
 
-  //   const allKeys = await AsyncStorage.getAllKeys();
-  //   console.log(allKeys);
+    const cartItems = data.map((item) => ({
+      name: item.cartItem.title,
+      id: item.cartItem._id,
+      price: item.cartItem.price,
+      cartQuantity: item.quantity,
+    }));
 
-  //   await fetch(
-  //     "https://rn-ecom-payment-server-production.up.railway.app/stripe/create-checkout-session",
-  //     {
-  //       method: "POST",
-  //       headers: {
-  //         "Content-Type": "application/json",
-  //       },
-  //       body: JSON.stringify({
-  //         userId: id,
-  //         cartItems: [
-  //           {
-  //             name: item.title,
-  //             id: item._id,
-  //             price: item.price,
-  //             cartQuantity: count,
-  //           },
-  //         ],
-  //       }),
-  //     }
-  //   )
-  //     .then((response) => response.json())
-  //     .then((data) => setPaymentUrl(data.url))
-  //     .catch((error) => console.error(error));
-  // };
+    console.log("cartItems map:", cartItems);
+    await fetch(
+      "https://rn-ecom-payment-server-production.up.railway.app/stripe/create-checkout-session",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId: id,
+          cartItems: cartItems,
+        }),
+      }
+    )
+      .then((response) => response.json())
+      .then((data) => setPaymentUrl(data.url))
+      .catch((error) => console.error(error));
+  };
+
+  const onNavigationStateChange = (webViewState) => {
+    const { url } = webViewState;
+
+    if (url && url.includes("checkout-success")) {
+      navigation.navigate("Orders");
+    } else if (url && url.includes("cancel")) {
+      navigation.goBack();
+    }
+  };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.titleRow}>
-        <TouchableOpacity
-          onPress={() => {
-            navigation.goBack();
-          }}
-        >
-          <Ionicons name={"chevron-back-circle"} size={30} color="teal" />
-        </TouchableOpacity>
-        <Text style={styles.titleText}>Cart</Text>
-      </View>
-
-      {loading ? (
-        <ActivityIndicator />
+    <View style={{ flex: 1 }}>
+      {paymentUrl ? (
+        <SafeAreaView style={{ flex: 1, backgroundColor: "white" }}>
+          <WebView
+            source={{ uri: paymentUrl }}
+            onNavigationStateChange={onNavigationStateChange}
+          />
+        </SafeAreaView>
       ) : (
-        <FlatList
-          keyExtractor={(item) => item._id}
-          data={data}
-          renderItem={({ item }) => (
-            <CartTile
-              item={item}
+        <SafeAreaView style={styles.container}>
+          <View style={styles.titleRow}>
+            <TouchableOpacity
               onPress={() => {
-                toggleSelectItem(item);
+                navigation.goBack();
               }}
-              select={selectedItems.some(
-                (selectedItem) => selectedItem._id === item._id
+            >
+              <Ionicons name={"chevron-back-circle"} size={30} color="teal" />
+            </TouchableOpacity>
+            <Text style={styles.titleText}>Cart</Text>
+          </View>
+
+          {loading ? (
+            <ActivityIndicator />
+          ) : (
+            <FlatList
+              keyExtractor={(item) => item._id}
+              data={data}
+              renderItem={({ item }) => (
+                <CartTile
+                  item={item}
+                  onPress={() => {
+                    toggleSelectItem(item);
+                  }}
+                  select={selectedItems.some(
+                    (selectedItem) => selectedItem._id === item._id
+                  )}
+                  itemQuantity={itemQuantity}
+                  setItemQuantity={setItemQuantity}
+                  onIncrement={onIncrement}
+                  onDecrement={onDecrement}
+                  onDelete={deleteCartItem}
+                />
               )}
-              itemQuantity={itemQuantity}
-              setItemQuantity={setItemQuantity}
-              onIncrement={onIncrement}
-              onDecrement={onDecrement}
-              onDelete={deleteCartItem}
             />
           )}
-        />
-      )}
-      <View>
-        <Text>Total: {calculateTotalAmount()} </Text>
-      </View>
 
-      {selectedItems.length === 0 ? (
-        <View></View>
-      ) : (
-        <Button
-          title={"Checkout"}
-          isValid={true}
-          onPress={() => {
-            createCheckOut();
-          }}
-        />
+          <View>
+            <Text>Total: {calculateTotalAmount()} </Text>
+          </View>
+
+          {selectedItems.length === 0 ? (
+            <View></View>
+          ) : (
+            <Button
+              title={"Checkout"}
+              isValid={true}
+              onPress={() => {
+                createCheckOut();
+              }}
+            />
+          )}
+        </SafeAreaView>
       )}
-    </SafeAreaView>
+    </View>
   );
 };
 
