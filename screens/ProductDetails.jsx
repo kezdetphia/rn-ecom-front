@@ -1,32 +1,31 @@
 import {
-  StyleSheet,
+  View,
   Text,
   TouchableOpacity,
-  View,
   Image,
   Alert,
   SafeAreaView,
+  StyleSheet,
 } from "react-native";
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
+import { useRoute } from "@react-navigation/native";
 import {
   Ionicons,
   SimpleLineIcons,
   MaterialCommunityIcons,
   Fontisto,
 } from "@expo/vector-icons";
-import { useRoute } from "@react-navigation/native";
-import addToCart from "../hook/addToCart";
+import AddToCart from "../hook/addToCart";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import WebView from "react-native-webview";
 
 const ProductDetails = ({ navigation }) => {
   const route = useRoute();
   const { item } = route.params;
-
   const [count, setCount] = useState(1);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [favourites, setFavourites] = useState(false);
-  const [paymentUrl, setPaymentUrl] = useState("");
+  const [paymentUrl, setPaymentUrl] = useState(false);
 
   const increment = () => {
     setCount(count + 1);
@@ -45,56 +44,41 @@ const ProductDetails = ({ navigation }) => {
 
   const checkUser = async () => {
     try {
-      const id = await AsyncStorage.getItem("id");
+      const id = AsyncStorage.getItem("id");
       if (id !== null) {
         setIsLoggedIn(true);
-        console.log("User logged in");
       } else {
-        console.log("User not logged in");
+        console.log("user not logged in");
       }
-    } catch (err) {
-      console.log("Error checking user: ", err);
-    }
+    } catch (error) {}
   };
 
-  const createCheckout = async () => {
-    try {
-      const id = await AsyncStorage.getItem("id");
-      // const userId = JSON.parse(id); // Assuming id is a JSON string
-      // console.log(userId);
-      const res = await fetch(
-        "https://rn-ecom-payment-server.vercel.app/stripe/create-checkout-session",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            userId: JSON.parse(id), // Use userId directly
-            cartItem: [
-              {
-                name: item.title,
-                id: item._id,
-                price: item.price,
-                cartQuantity: count,
-              },
-            ],
-          }),
-        }
-      );
+  const createCheckOut = async () => {
+    const id = JSON.parse(await AsyncStorage.getItem("id"));
 
-      if (!res.ok) {
-        console.error(
-          `Response status: ${res.status}, Status text: ${res.statusText}`
-        );
-        throw new Error("Network response was not ok");
+    fetch(
+      "https://rn-ecom-payment-server-production.up.railway.app/stripe/create-checkout-session",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId: id,
+          cartItems: [
+            {
+              name: item.title,
+              id: item._id,
+              price: item.price,
+              cartQuantity: count,
+            },
+          ],
+        }),
       }
-
-      const { url } = await res.json();
-      setPaymentUrl(url);
-    } catch (error) {
-      console.log("Error creating checkout:", error);
-    }
+    )
+      .then((response) => response.json())
+      .then((data) => setPaymentUrl(data.url))
+      .catch((error) => console.error(error));
   };
 
   const onNavigationStateChange = (webViewState) => {
@@ -103,79 +87,15 @@ const ProductDetails = ({ navigation }) => {
     if (url && url.includes("checkout-success")) {
       navigation.navigate("Orders");
     } else if (url && url.includes("cancel")) {
-      Alert.alert("Payment failed", "Please retry to make the payment", [
-        {
-          text: "Cancel",
-          onPress: () => {
-            navigation.navigate("Bottom Navigation");
-          },
-        },
-        {
-          text: "Retry",
-          onPress: () => navigation.goBack(),
-        },
-        { defaultIndex: 1 },
-      ]);
-    }
-  };
-
-  const handleFavourites = () => {
-    if (!isLoggedIn) {
-      navigation.navigate("Login");
-    } else {
-      addToFavourites();
-    }
-  };
-
-  const handleBuy = () => {
-    if (!isLoggedIn) {
-      navigation.navigate("Login");
-    } else {
-      createCheckout();
-    }
-  };
-
-  const handleCart = () => {
-    if (!isLoggedIn) {
-      navigation.navigate("Login");
-    } else {
-      addToCart(item._id, count);
-    }
-  };
-
-  const checkFavourites = async () => {
-    const id = await AsyncStorage.getItem("id");
-    const favouritesId = `favourites${JSON.parse(id)}`;
-
-    try {
-      // const existingItem = await AsyncStorage.getItem(favouritesId);
-      const favouritesObj = await AsyncStorage.getItem(favouritesId);
-      // let favouritesObj = existingItem ? JSON.parse(existingItem) : {};
-
-      // if (favouritesObj[item._id]) {
-      if (favouritesObj !== null) {
-        const favourites = JSON.parse(favouritesObj);
-
-        if (favourites[item._id]) {
-          console.log(item._id, "is in favourites");
-          setFavourites(true);
-        }
-      } else {
-        setFavourites(false);
-      }
-    } catch (err) {
-      console.log(err);
+      navigation.goBack();
     }
   };
 
   const addToFavourites = async () => {
     const id = await AsyncStorage.getItem("id");
-    //favourites+mongo user id
     const favouritesId = `favourites${JSON.parse(id)}`;
 
-    //mongo doc product id
     let productId = item._id;
-
     let productObj = {
       title: item.title,
       id: item._id,
@@ -186,27 +106,66 @@ const ProductDetails = ({ navigation }) => {
     };
 
     try {
-      //check if we have any facourites in the AsyncStorage
-      //under 'favourites' + mongo user id' key
       const existingItem = await AsyncStorage.getItem(favouritesId);
-
       let favouritesObj = existingItem ? JSON.parse(existingItem) : {};
 
       if (favouritesObj[productId]) {
         delete favouritesObj[productId];
-        console.log("Item removed from favourites");
+
         setFavourites(false);
       } else {
         favouritesObj[productId] = productObj;
-        console.log("added to fav");
         setFavourites(true);
       }
 
       await AsyncStorage.setItem(favouritesId, JSON.stringify(favouritesObj));
-    } catch (err) {
-      console.log(err);
+    } catch (error) {
+      console.log(error);
     }
   };
+
+  const handlePress = () => {
+    if (isLoggedIn === false) {
+      navigation.navigate("Login");
+    } else {
+      addToFavourites();
+    }
+  };
+
+  const handleBuy = async () => {
+    if (isLoggedIn === false) {
+      navigation.navigate("Login");
+    } else {
+      createCheckOut();
+    }
+  };
+
+  const handleCart = () => {
+    if (isLoggedIn === false) {
+      navigation.navigate("Login");
+    } else {
+      AddToCart(item._id, count);
+    }
+  };
+
+  const checkFavourites = async () => {
+    const id = await AsyncStorage.getItem("id");
+    const favouritesId = `favourites${JSON.parse(id)}`;
+
+    try {
+      const favouritesObj = await AsyncStorage.getItem(favouritesId);
+      if (favouritesObj !== null) {
+        const favourites = JSON.parse(favouritesObj);
+
+        if (favourites[item._id]) {
+          setFavourites(true);
+        }
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
 
   return (
     <View style={styles.container}>
@@ -230,7 +189,7 @@ const ProductDetails = ({ navigation }) => {
 
             <TouchableOpacity
               onPress={() => {
-                handleFavourites();
+                handlePress();
               }}
             >
               <Ionicons

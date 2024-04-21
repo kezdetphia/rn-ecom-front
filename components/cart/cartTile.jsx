@@ -1,11 +1,43 @@
 import { View, Text, TouchableOpacity, Image, StyleSheet } from "react-native";
-import { AntDesign, Feather, MaterialIcons } from "@expo/vector-icons";
+import { AntDesign } from "@expo/vector-icons";
+import { useState } from "react";
+import axios from "axios";
 
-const CartTile = ({ item, onPress, select }) => {
+const CartTile = ({
+  item,
+  onPress,
+  itemQuantity,
+  onIncrement,
+  onDecrement,
+  onDelete,
+}) => {
+  const [select, setSelect] = useState(false);
+
+  const quantity =
+    itemQuantity.find((prod) => prod.cartItemId === item.cartItem._id)
+      ?.cartItemQuantity || 0;
+
+  console.log("item_id in cartTile:", item._id);
+
+  const cartSingleItemId = item._id.toString();
+
+  const handleDelete = async (itemId) => {
+    const res = await axios.delete(`http://localhost:3000/api/cart/${itemId}`);
+    if (!res.data.error) {
+      console.log("Item deleted");
+    } else {
+      console.log("Item not deleted");
+    }
+    onDelete();
+  };
+
   return (
     <TouchableOpacity
       style={styles.favContainer(!select ? "#FFF" : "lightblue")}
-      onPress={onPress}
+      onPress={() => {
+        setSelect(!select);
+        onPress(item);
+      }}
     >
       <View style={styles.imageContainer}>
         <Image source={{ uri: item.cartItem.imageUrl }} style={styles.image} />
@@ -17,17 +49,37 @@ const CartTile = ({ item, onPress, select }) => {
         <Text style={styles.supplier} numberOfLines={1}>
           {item.cartItem.supplier}
         </Text>
-        <Text style={styles.supplier} numberOfLines={1}>
-          {item.cartItem.price} X {item.quantity}
-        </Text>
-      </View>
 
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+          }}
+        >
+          <Text style={styles.supplier} numberOfLines={1}>
+            {item.cartItem.price}
+          </Text>
+
+          <View style={styles.quantityContainer}>
+            <TouchableOpacity onPress={() => onDecrement(item.cartItem._id)}>
+              <AntDesign name="minuscircleo" size={18} color="black" />
+            </TouchableOpacity>
+
+            <Text style={{ marginHorizontal: 7 }}> {quantity} </Text>
+
+            <TouchableOpacity onPress={() => onIncrement(item.cartItem._id)}>
+              <AntDesign name="pluscircleo" size={18} color="black" />
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
       <TouchableOpacity
         style={{ paddingBottom: 8, paddingLeft: 75 }}
         onPress={() => {
-          onPress;
+          handleDelete(cartSingleItemId);
         }}
       >
+        {/* //TODO: Add delete functionality */}
         <AntDesign name="delete" size={18} color="red" />
       </TouchableOpacity>
     </TouchableOpacity>
@@ -37,13 +89,6 @@ const CartTile = ({ item, onPress, select }) => {
 export default CartTile;
 
 const styles = StyleSheet.create({
-  // titleText: {
-  //   fontFamily: "bold",
-  //   fontSize: 16,
-  //   letterSpacing: 4,
-  //   marginLeft: 10,
-  //   color: "teal",
-  // },
   favContainer: (color) => ({
     flex: 1,
     justifyContent: "flex-start",
@@ -78,10 +123,15 @@ const styles = StyleSheet.create({
     color: "teal",
   },
   supplier: {
-    fontsize: 14,
+    fontSize: 14,
     fontFamily: "regular",
     color: "gray",
     marginTop: 3,
-    textTransofrm: "capitalize",
+    textTransform: "capitalize",
+  },
+  quantityContainer: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    marginLeft: 10,
   },
 });

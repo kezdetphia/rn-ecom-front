@@ -13,10 +13,12 @@ import Headings from "../components/home/Headings";
 import ProductRow from "../components/products/ProductRow";
 import { useEffect, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import fetchCart from "../hook/fetchCart";
 
 const Home = ({ navigation }) => {
   const [userData, setUserData] = useState(null);
   const [userLogin, setUserLogin] = useState(false);
+  const { data } = fetchCart();
 
   useEffect(() => {
     checkExistingUser();
@@ -49,7 +51,7 @@ const Home = ({ navigation }) => {
           </Text>
           <View style={{ alignItems: "flex-end" }}>
             <View style={styles.cartCount}>
-              <Text style={styles.cartNumber}>8</Text>
+              <Text style={styles.cartNumber}>{data.length}</Text>
             </View>
             <TouchableOpacity onPress={() => navigation.navigate("Cart")}>
               <Fontisto name="shopping-bag" size={24} />

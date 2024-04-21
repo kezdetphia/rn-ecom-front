@@ -11,14 +11,129 @@ import {
 import { Ionicons, SimpleLineIcons } from "@expo/vector-icons";
 import fetchCart from "../hook/fetchCart";
 import CartTile from "../components/cart/cartTile";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Button from "../components/Button";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const screenWidth = Dimensions.get("window").width;
 const Cart = ({ navigation }) => {
   const { data, loading, error, refetch } = fetchCart();
-  const [selected, setSelected] = useState(null);
-  const [select, setSelect] = useState(false);
+  const [selectedItems, setSelectedItems] = useState([]);
+  const [itemQuantity, setItemQuantity] = useState([]);
+
+
+  const deleteCartItem = (cartItemId) => {
+    // Remove the item from the data and itemQuantity arrays
+    const updatedData = data.filter((item) => item._id !== cartItemId);
+    const updatedItemQuantity = itemQuantity.filter(
+      (item) => item.cartItemId !== cartItemId
+    );
+
+    // Update the state
+    refetch(); // This will refetch the cart data from the server
+    setItemQuantity(updatedItemQuantity);
+  };
+
+
+  const onIncrement = (cartItemId) => {
+    const updatedItemQuantity = itemQuantity.map((item) => {
+      if (item.cartItemId === cartItemId) {
+        return {
+          ...item,
+          cartItemQuantity: item.cartItemQuantity + 1,
+        };
+      }
+      return item;
+    });
+    setItemQuantity(updatedItemQuantity);
+  };
+
+  const onDecrement = (cartItemId) => {
+    const updatedItemQuantity = itemQuantity.map((item) => {
+      if (item.cartItemId === cartItemId && item.cartItemQuantity > 0) {
+        return {
+          ...item,
+          cartItemQuantity: item.cartItemQuantity - 1,
+        };
+      }
+      return item;
+    });
+    setItemQuantity(updatedItemQuantity);
+  };
+
+  useEffect(() => {
+    const intialItemQuantityDetails = data.map((item) => ({
+      cartItemId: item.cartItem._id,
+      cartItemQuantity: item.quantity,
+    }));
+    setItemQuantity(intialItemQuantityDetails);
+  }, [data]);
+
+  useEffect(() => {
+    calculateTotalAmount();
+  }, [data]);
+
+  const calculateTotalAmount = () => {
+    let totalPrice = 0;
+
+    selectedItems.forEach((selectedItem) => {
+      const item = data.find((cartItem) => cartItem._id === selectedItem._id);
+      const price = parseFloat(item.cartItem.price);
+      const quantity = item.quantity;
+      totalPrice += price * quantity;
+    });
+
+    return totalPrice.toFixed(2);
+  };
+
+  const toggleSelectItem = (item) => {
+    const isSelected = selectedItems.some(
+      (selectedItem) => selectedItem._id === item._id
+    );
+
+    if (isSelected) {
+      const updatedItems = selectedItems.filter(
+        (selectedItem) => selectedItem._id !== item._id
+      );
+      setSelectedItems(updatedItems);
+    } else {
+      setSelectedItems([...selectedItems, item]);
+    }
+  };
+
+  //TODO: Add checkoout function
+  // add delete from cart function
+  // const createCheckOut = async () => {
+  //   const userId = JSON.parse(await AsyncStorage.getItem("id"));
+  //   console.log(userId);
+
+  //   const allKeys = await AsyncStorage.getAllKeys();
+  //   console.log(allKeys);
+
+  //   await fetch(
+  //     "https://rn-ecom-payment-server-production.up.railway.app/stripe/create-checkout-session",
+  //     {
+  //       method: "POST",
+  //       headers: {
+  //         "Content-Type": "application/json",
+  //       },
+  //       body: JSON.stringify({
+  //         userId: id,
+  //         cartItems: [
+  //           {
+  //             name: item.title,
+  //             id: item._id,
+  //             price: item.price,
+  //             cartQuantity: count,
+  //           },
+  //         ],
+  //       }),
+  //     }
+  //   )
+  //     .then((response) => response.json())
+  //     .then((data) => setPaymentUrl(data.url))
+  //     .catch((error) => console.error(error));
+  // };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -32,6 +147,7 @@ const Cart = ({ navigation }) => {
         </TouchableOpacity>
         <Text style={styles.titleText}>Cart</Text>
       </View>
+
       {loading ? (
         <ActivityIndicator />
       ) : (
@@ -42,19 +158,34 @@ const Cart = ({ navigation }) => {
             <CartTile
               item={item}
               onPress={() => {
-                setSelect(!select);
-                setSelected(item);
+                toggleSelectItem(item);
               }}
-              select={select}
+              select={selectedItems.some(
+                (selectedItem) => selectedItem._id === item._id
+              )}
+              itemQuantity={itemQuantity}
+              setItemQuantity={setItemQuantity}
+              onIncrement={onIncrement}
+              onDecrement={onDecrement}
+              onDelete={deleteCartItem}
             />
           )}
         />
       )}
+      <View>
+        <Text>Total: {calculateTotalAmount()} </Text>
+      </View>
 
-      {selected ? (
-        <Button title={"Checkout"} isValid={select} onPress={() => {}} />
-      ) : (
+      {selectedItems.length === 0 ? (
         <View></View>
+      ) : (
+        <Button
+          title={"Checkout"}
+          isValid={true}
+          onPress={() => {
+            createCheckOut();
+          }}
+        />
       )}
     </SafeAreaView>
   );
@@ -65,7 +196,7 @@ export default Cart;
 const styles = StyleSheet.create({
   container: {
     marginTop: 20,
-    marginHorizontal: 20,
+    marginHorizontal: 8,
   },
   titleRow: {
     flexDirection: "row",

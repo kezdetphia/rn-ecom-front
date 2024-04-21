@@ -24,13 +24,27 @@ const Profile = ({ navigation }) => {
   }, []);
 
   //TODO: make sure user is logged out, asyncstorage is not removing keys
-
   const userLogout = async () => {
     const id = await AsyncStorage.getItem("id");
     const userId = `user${JSON.parse(id)}`;
     try {
+      await AsyncStorage.multiRemove([userId, "id"]);
+      // await AsyncStorage.removeItem(userId);
+      // await AsyncStorage.removeItem("id");
+
+      navigation.replace("Bottom Navigation");
+    } catch (err) {
+      console.log("Error logging out the user: ", err);
+    }
+  };
+
+  const cacheClear = async () => {
+    const id = await AsyncStorage.getItem("id");
+    const userId = `favourites${JSON.parse(id)}`;
+    try {
       await AsyncStorage.removeItem(userId);
-      await AsyncStorage.removeItem("id");
+      // await AsyncStorage.removeItem(userId);
+      // await AsyncStorage.removeItem("id");
 
       navigation.replace("Bottom Navigation");
     } catch (err) {
@@ -85,7 +99,7 @@ const Profile = ({ navigation }) => {
         {
           text: "Continue",
           onPress: () => {
-            console.log("Continue Clear Cache Pressed");
+           cacheClear()
           },
         },
         { defaultIndex: 1 },
