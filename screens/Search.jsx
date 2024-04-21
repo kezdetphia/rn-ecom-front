@@ -20,7 +20,8 @@ const Search = () => {
   const handleSearch = async () => {
     try {
       const res = await axios.get(
-        `http://localhost:3000/api/products/search/${searchKey}`
+        `https://rn-ecom-back.vercel.app/api/products/search/${searchKey}`
+        // `https://localhost:3000/api/products/search/${searchKey}`
       );
       setSearchResults(res.data);
     } catch (err) {

@@ -53,7 +53,8 @@ const SignupPage = ({ navigation }) => {
   const registerUser = async (values) => {
     setLoader(true);
     try {
-      const endpoint = "http://localhost:3000/api/register";
+      const endpoint = "https://rn-ecom-back.vercel.app/api/register";
+      // const endpoint = "https://localhost:3000/api/register";
       const data = values;
       const res = await axios.post(endpoint, data);
 
@@ -81,7 +82,6 @@ const SignupPage = ({ navigation }) => {
             }}
             validationSchema={validationSchema}
             onSubmit={(values) => registerUser(values)}
-            
           >
             {({
               handleChange,

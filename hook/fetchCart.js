@@ -12,7 +12,9 @@ const fetchCart = () => {
     const token = await AsyncStorage.getItem("token");
 
     try {
-      const endpoint = "http://localhost:3000/api/cart/find";
+      // const endpoint = "https://localhost:3000/api/cart/find";
+      const endpoint = "https://rn-ecom-back.vercel.app/api/cart/find";
+
       const headers = {
         "Content-Type": "application/json",
         token: "Bearer " + JSON.parse(token),

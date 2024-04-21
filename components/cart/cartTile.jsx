@@ -22,7 +22,10 @@ const CartTile = ({
   const cartSingleItemId = item._id.toString();
 
   const handleDelete = async (itemId) => {
-    const res = await axios.delete(`http://localhost:3000/api/cart/${itemId}`);
+    const res = await axios.delete(
+      `https://rn-ecom-back.vercel.app/api/cart/${itemId}`
+    );
+    // const res = await axios.delete(`http://localhost:3000/api/cart/${itemId}`);
     if (!res.data.error) {
       console.log("Item deleted");
     } else {

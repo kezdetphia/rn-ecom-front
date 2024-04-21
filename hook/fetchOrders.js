@@ -12,16 +12,17 @@ const fetchOrders = () => {
     const token = await AsyncStorage.getItem("token");
 
     try {
-      const endpoint = "http://localhost:3000/api/orders";
+      const endpoint = "https://rn-ecom-back.vercel.app/api/orders";
+      // const endpoint = "http://localhost:3000/api/orders";
       const headers = {
         "Content-Type": "application/json",
         token: "Bearer " + JSON.parse(token),
       };
 
       const res = await axios.get(endpoint, { headers });
-   
+
       setData(res.data);
- 
+
       setLoading(false);
     } catch (err) {
       setError(err);
