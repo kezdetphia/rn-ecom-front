@@ -15,6 +15,8 @@ import { useEffect, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import fetchCart from "../hook/fetchCart";
 
+
+//TODO: whenever adding new item int he cart we need to update the cart count in the home screen.
 const Home = ({ navigation }) => {
   const [userData, setUserData] = useState(null);
   const [userLogin, setUserLogin] = useState(false);
@@ -27,10 +29,8 @@ const Home = ({ navigation }) => {
   const checkExistingUser = async () => {
     const id = await AsyncStorage.getItem("id");
     const userId = `user${JSON.parse(id)}`;
-
     try {
       const currentUser = await AsyncStorage.getItem(userId);
-
       if (currentUser !== null) {
         const parsedData = JSON.parse(currentUser);
         setUserData(parsedData);

@@ -48,8 +48,8 @@ const LoginPage = ({ navigation }) => {
     //TODO: try instead of res.data._id use responseData._id
     setLoader(true);
     try {
-      const endpoint = "https://rn-ecom-back.vercel.app//api/login";
-      // const endpoint = "https://localhost:3000//api/login";
+      // const endpoint = "https://rn-ecom-back.vercel.app/api/login";
+      const endpoint = "https://localhost:3000/api/login";
       const data = values;
 
       const res = await axios.post(endpoint, data);

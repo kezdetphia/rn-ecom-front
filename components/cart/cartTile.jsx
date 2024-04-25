@@ -6,19 +6,20 @@ import axios from "axios";
 const CartTile = ({
   item,
   onPress,
-  itemQuantity,
+  myItems,
   onIncrement,
   onDecrement,
-  onDelete,
+  deleteCartItem,
 }) => {
   const [select, setSelect] = useState(false);
 
+  //this gets the quantity for each id but its coming from DB,
+
   const quantity =
-    itemQuantity.find((prod) => prod.cartItemId === item.cartItem._id)
+    myItems.find((prod) => prod.cartItemId === item.cartItem._id)
       ?.cartItemQuantity || 0;
 
   const cartSingleItemId = item._id.toString();
-
 
   const handleDelete = async (itemId) => {
     // const res = await axios.delete(
@@ -30,8 +31,10 @@ const CartTile = ({
     } else {
       console.log("Item not deleted");
     }
-    onDelete();
+    deleteCartItem();
   };
+
+  //need a state that increases each items quantity separate based on id
 
   return (
     <TouchableOpacity
@@ -63,20 +66,26 @@ const CartTile = ({
           </Text>
 
           <View style={styles.quantityContainer}>
-            <TouchableOpacity onPress={() => onDecrement(item.cartItem._id)}>
+            <TouchableOpacity
+              onPress={() => {
+                onDecrement(item.cartItem._id);
+              }}
+            >
               <AntDesign name="minuscircleo" size={18} color="black" />
             </TouchableOpacity>
+            <Text style={{ marginHorizontal: 7 }}> {quantity}</Text>
 
-            <Text style={{ marginHorizontal: 7 }}> {quantity} </Text>
-
-            <TouchableOpacity onPress={() => onIncrement(item.cartItem._id)}>
+            <TouchableOpacity
+              onPress={() => {
+                onIncrement(item.cartItem._id);
+              }}
+            >
               <AntDesign name="pluscircleo" size={18} color="black" />
             </TouchableOpacity>
           </View>
         </View>
       </View>
       <TouchableOpacity
-        style={{ paddingBottom: 8, paddingLeft: 75 }}
         onPress={() => {
           handleDelete(cartSingleItemId);
         }}

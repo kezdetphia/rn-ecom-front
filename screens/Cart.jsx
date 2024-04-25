@@ -15,33 +15,60 @@ import { useEffect, useState } from "react";
 import Button from "../components/Button";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import WebView from "react-native-webview";
+import updateCart from "../hook/updateCart";
+import deleteCart from "../hook/deleteCart";
 
 const screenWidth = Dimensions.get("window").width;
 
-//TODO: work out price based on items in the cart, also add a checkout function
+//TODO: when theres too many items in the cart, the checkout button and total amount are not visible
 
 const Cart = ({ navigation }) => {
   const { data, loading, error, refetch } = fetchCart();
   const [selectedItems, setSelectedItems] = useState([]);
-  const [itemQuantity, setItemQuantity] = useState([]);
+  const [myItems, setMyItems] = useState([]);
   const [paymentUrl, setPaymentUrl] = useState(false);
 
-  console.log("Cart item quantity:", itemQuantity);
-
   const deleteCartItem = (cartItemId) => {
-    // Remove the item from the data and itemQuantity arrays
+    // Remove the item from the data and myItems arrays
     const updatedData = data.filter((item) => item._id !== cartItemId);
-    const updatedItemQuantity = itemQuantity.filter(
+    const updatedItemQuantity = myItems.filter(
       (item) => item.cartItemId !== cartItemId
     );
 
     // Update the state
     refetch(); // This will refetch the cart data from the server
-    setItemQuantity(updatedItemQuantity);
+    setMyItems(updatedItemQuantity);
   };
 
-  const onIncrement = (cartItemId) => {
-    const updatedItemQuantity = itemQuantity.map((item) => {
+  const submitCartItemQuantityChange = async () => {
+    try {
+      myItems.map((item) => {
+        const { cartItemId, cartItemQuantity } = item;
+        updateCart(cartItemId, cartItemQuantity);
+      });
+    } catch (error) {
+      console.log("Error updtingcart,", error);
+    }
+  };
+  // const submitCartItemQuantityChange = async () => {
+  //   try {
+  //     const item = myItems.find((item) => {
+  //       return selectedItems.includes(item.cartItemId);
+  //     });
+
+  //     if (item) {
+  //       const { cartItemId, cartItemQuantity } = item;
+  //       await updateCart(cartItemId, cartItemQuantity);
+  //     } else {
+  //       console.log("Item not found");
+  //     }
+  //   } catch (error) {
+  //     console.log("Error updtingcart,", error);
+  //   }
+  // };
+
+  const onIncrement = async (cartItemId) => {
+    const updatedItemQuantity = myItems.map((item) => {
       if (item.cartItemId === cartItemId) {
         return {
           ...item,
@@ -50,12 +77,12 @@ const Cart = ({ navigation }) => {
       }
       return item;
     });
-    setItemQuantity(updatedItemQuantity);
+    setMyItems(updatedItemQuantity);
   };
 
   const onDecrement = (cartItemId) => {
-    const updatedItemQuantity = itemQuantity.map((item) => {
-      if (item.cartItemId === cartItemId && item.cartItemQuantity > 0) {
+    const updatedItemQuantity = myItems.map((item) => {
+      if (item.cartItemId === cartItemId && item.cartItemQuantity > 1) {
         return {
           ...item,
           cartItemQuantity: item.cartItemQuantity - 1,
@@ -63,15 +90,17 @@ const Cart = ({ navigation }) => {
       }
       return item;
     });
-    setItemQuantity(updatedItemQuantity);
+    setMyItems(updatedItemQuantity);
   };
 
   useEffect(() => {
     const intialItemQuantityDetails = data.map((item) => ({
-      // cartItemId: item.cartItem._id,
+      cartItemTitle: item.cartItem.title,
+      cartItemId: item.cartItem._id,
       cartItemQuantity: item.quantity,
+      cartItemPrice: item.cartItem.price,
     }));
-    setItemQuantity(intialItemQuantityDetails);
+    setMyItems(intialItemQuantityDetails);
   }, [data]);
 
   useEffect(() => {
@@ -81,64 +110,80 @@ const Cart = ({ navigation }) => {
   const calculateTotalAmount = () => {
     let totalPrice = 0;
 
-    selectedItems.forEach((selectedItem) => {
-      const item = data.find((cartItem) => cartItem._id === selectedItem._id);
-      const price = parseFloat(item.cartItem.price);
-      const quantity = item.quantity;
-      totalPrice += price * quantity;
-    });
+    selectedItems.forEach((selectedItemId) => {
+      const selectedItem = myItems.find(
+        (item) => item.cartItemId === selectedItemId
+      );
 
+      if (selectedItem) {
+        const price = parseFloat(selectedItem.cartItemPrice);
+        const quantity = selectedItem.cartItemQuantity;
+        totalPrice += price * quantity;
+      }
+    });
     return totalPrice.toFixed(2);
   };
 
   const toggleSelectItem = (item) => {
     const isSelected = selectedItems.some(
-      (selectedItem) => selectedItem._id === item._id
+      (selectedItem) => selectedItem === item.cartItem._id
     );
 
     if (isSelected) {
       const updatedItems = selectedItems.filter(
-        (selectedItem) => selectedItem._id !== item._id
+        (selectedItem) => selectedItem !== item.cartItem._id
       );
       setSelectedItems(updatedItems);
     } else {
-      setSelectedItems([...selectedItems, item]);
+      setSelectedItems([...selectedItems, item.cartItem._id]);
     }
   };
 
   const createCheckOut = async () => {
     const id = JSON.parse(await AsyncStorage.getItem("id"));
 
-    const cartItems = data.map((item) => ({
-      name: item.cartItem.title,
-      id: item.cartItem._id,
-      price: item.cartItem.price,
-      cartQuantity: item.quantity,
+    const selectedCartItemsMatch = myItems.filter((item) =>
+      selectedItems.includes(item.cartItemId)
+    );
+
+    const cartItemss = selectedCartItemsMatch.map((item) => ({
+      name: item.cartItemTitle, // Make sure this matches the actual property name
+      id: item.cartItemId,
+      price: parseFloat(item.cartItemPrice), // Convert to float
+      cartQuantity: item.cartItemQuantity,
     }));
 
-    console.log("cartItems map:", cartItems);
-    await fetch(
-      "https://rn-ecom-payment-server-production.up.railway.app/stripe/create-checkout-session",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          userId: id,
-          cartItems: cartItems,
-        }),
+    try {
+      const res = await fetch(
+        "https://rn-ecom-payment-server-production.up.railway.app/stripe/create-checkout-session",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            userId: id,
+            cartItems: cartItemss,
+          }),
+        }
+      );
+
+      if (!res.ok) {
+        throw new Error("Failed to create checkout sessiong", Error);
       }
-    )
-      .then((response) => response.json())
-      .then((data) => setPaymentUrl(data.url))
-      .catch((error) => console.error(error));
+
+      const data = await res.json();
+      setPaymentUrl(data.url);
+    } catch (err) {
+      console.log(err);
+    }
   };
 
   const onNavigationStateChange = (webViewState) => {
     const { url } = webViewState;
 
     if (url && url.includes("checkout-success")) {
+      deleteCart();
       navigation.navigate("Orders");
     } else if (url && url.includes("cancel")) {
       navigation.goBack();
@@ -158,7 +203,8 @@ const Cart = ({ navigation }) => {
         <SafeAreaView style={styles.container}>
           <View style={styles.titleRow}>
             <TouchableOpacity
-              onPress={() => {
+              onPress={async () => {
+                await submitCartItemQuantityChange();
                 navigation.goBack();
               }}
             >
@@ -182,11 +228,11 @@ const Cart = ({ navigation }) => {
                   select={selectedItems.some(
                     (selectedItem) => selectedItem._id === item._id
                   )}
-                  itemQuantity={itemQuantity}
-                  setItemQuantity={setItemQuantity}
+                  myItems={myItems}
+                  setMyItems={setMyItems}
                   onIncrement={onIncrement}
                   onDecrement={onDecrement}
-                  onDelete={deleteCartItem}
+                  deleteCartItem={deleteCartItem}
                 />
               )}
             />

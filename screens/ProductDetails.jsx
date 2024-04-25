@@ -28,6 +28,7 @@ const ProductDetails = ({ navigation }) => {
   const [paymentUrl, setPaymentUrl] = useState(false);
 
   console.log("item in productDetails:", item._id);
+  console.log("count", count);
 
   const increment = () => {
     setCount(count + 1);
@@ -148,6 +149,7 @@ const ProductDetails = ({ navigation }) => {
       navigation.navigate("Login");
     } else {
       AddToCart(item._id, count);
+      console.log("handlecart added item quanityt: ", count);
     }
   };
 
